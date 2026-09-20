@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>My Pet</title>
+<style>
+  html, body {
+    margin: 0; padding: 0; height: 100%;
+    background: linear-gradient(180deg, #fdf6e3, #f5e6c8);
+    font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
+    overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+  }
+  #stage {
+    position: relative;
+    width: 100%; height: 100%;
+  }
+  #pet {
+    position: absolute;
+    width: 140px; height: 140px;
+    cursor: grab;
+    animation: bob 2.2s ease-in-out infinite;
+    touch-action: none;
+  }
+  #pet:active { cursor: grabbing; }
+  #pet.walk { animation: bob 0.5s ease-in-out infinite, wiggle 0.5s ease-in-out infinite; }
+  #pet.blink #eyes { opacity: 0; }
+
+  @keyframes bob {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+  }
+  @keyframes wiggle {
+    0%, 100% { transform: rotate(-4deg); }
+    50% { transform: rotate(4deg); }
+  }
+
+  #bubble {
+    position: absolute;
+    max-width: 220px;
+    padding: 10px 14px;
+    background: #ffffff;
+    border: 2px solid #222;
+    border-radius: 16px;
+    font-size: 13px;
+    color: #222;
+    box-shadow: 3px 3px 0 rgba(0,0,0,0.1);
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    pointer-events: none;
+    white-space: normal;
+  }
+  #bubble.show { opacity: 1; }
+
+  #hint {
+    position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%);
+    font-size: 12px; color: #999;
+  }
+  #chatBtn {
+    position: absolute;
+    width: 26px; height: 26px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.9);
+    border: 1px solid #ddd;
+    font-size: 13px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    top: -4px; right: -4px;
+  }
+</style>
+</head>
+<body>
+<div id="stage">
+  <div id="bubble">Hi! Drag me around 👋</div>
+  <div id="pet">
+    <div id="chatBtn" title="Poke / talk to me">💬</div>
+    <svg width="140" height="140" viewBox="0 0 120 120">
+      <ellipse cx="60" cy="70" rx="34" ry="42" fill="#F7D354" stroke="#3a3a3a" stroke-width="3"/>
+      <path d="M40 30 Q55 5 75 20" fill="none" stroke="#3a3a3a" stroke-width="3" stroke-linecap="round"/>
+      <g id="eyes">
+        <circle cx="48" cy="65" r="4" fill="#222"/>
+        <circle cx="72" cy="65" r="4" fill="#222"/>
+      </g>
+      <path id="mouth" d="M50 82 Q60 90 70 82" fill="none" stroke="#222" stroke-width="3" stroke-linecap="round"/>
+    </svg>
+  </div>
+</div>
+<div id="hint">Open this file anytime by double-clicking it. Drag the banana, click 💬 to poke it.</div>
+
+<script>
+  const pet = document.getElementById('pet');
+  const bubble = document.getElementById('bubble');
+  const chatBtn = document.getElementById('chatBtn');
+  const stage = document.getElementById('stage');
+
+  // Start position
+  let x = window.innerWidth - 220, y = window.innerHeight - 220;
+  pet.style.left = x + 'px';
+  pet.style.top = y + 'px';
+  positionBubble();
+
+  function positionBubble() {
+    bubble.style.left = (x - 80) + 'px';
+    bubble.style.top = (y - 60) + 'px';
+  }
+
+  function say(text, ms = 3500) {
+    bubble.innerText = text;
+    positionBubble();
+    bubble.classList.add('show');
+    clearTimeout(say._t);
+    say._t = setTimeout(() => bubble.classList.remove('show'), ms);
+  }
+
+  // --- Dragging ---
+  let dragging = false, offX = 0, offY = 0;
+
+  pet.addEventListener('mousedown', (e) => {
+    dragging = true;
+    offX = e.clientX - x;
+    offY = e.clientY - y;
+    pet.classList.add('walk');
+  });
+  window.addEventListener('mousemove', (e) => {
+    if (!dragging) return;
+    x = e.clientX - offX;
+    y = e.clientY - offY;
+    pet.style.left = x + 'px';
+    pet.style.top = y + 'px';
+    positionBubble();
+  });
+  window.addEventListener('mouseup', () => {
+    if (dragging) { dragging = false; pet.classList.remove('walk'); }
+  });
+
+  // --- Blinking ---
+  setInterval(() => {
+    pet.classList.add('blink');
+    setTimeout(() => pet.classList.remove('blink'), 150);
+  }, 4000 + Math.random() * 3000);
+
+  // --- Poke / chat button: canned playful replies (works fully offline) ---
+  const replies = [
+    "Hehe, that tickles! 🍌",
+    "You called? I'm here for you.",
+    "Don't forget to drink some water 💧",
+    "Beep boop, I'm thinking real hard.",
+    "Take a quick stretch break!",
+    "You're doing great, keep going 💪",
+    "Boop! 🍌",
+    "I believe in you today.",
+  ];
+  chatBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    say(replies[Math.floor(Math.random() * replies.length)]);
+  });
+
+  // --- Random check-ins every 5 min ---
+  setInterval(() => {
+    say(replies[Math.floor(Math.random() * replies.length)], 4500);
+  }, 5 * 60 * 1000);
+
+  // Greet on load
+  setTimeout(() => say("Hi! Drag me around, click 💬 to poke me 🍌"), 500);
+</script>
+</body>
+</html>
